@@ -49,6 +49,8 @@ function showView(view) {
   for (const name of ['overview', 'quiz', 'flashcards']) $(`#${name}`).hidden = name !== view;
   document.querySelectorAll('[data-view]').forEach((node) => node.setAttribute('aria-pressed', String(node.dataset.view === view)));
   if (view === 'flashcards') { revealed = false; renderCards(); }
+  const heading = $(`#${view} h3`);
+  if (heading) { heading.tabIndex = -1; heading.focus(); }
 }
 document.querySelectorAll('[data-view]').forEach((node) => node.addEventListener('click', () => showView(node.dataset.view)));
 

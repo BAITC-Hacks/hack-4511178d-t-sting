@@ -1,72 +1,190 @@
 # LectureKit
 
-Paste a lecture and generate four study materials: a concise **summary**, separate **key points**, an interactive **quiz with correct answers and explanations**, and **flashcards with answers**. After checking the quiz, review cards for the topics you missed.
+**Превратите текст лекции в конспект, тезисы, тест и карточки — и повторите темы, в которых ошиблись.**
 
-## Run
+LectureKit помогает студенту перейти от чтения расшифровки к самопроверке: выделить главное, ответить на вопросы и открыть карточки по пропущенным темам. Тезис, вопрос и карточка связаны одной темой; раскрываемая выдержка из лекции позволяет вернуться к исходному тексту и проверить формулировку.
 
-Requires Node.js 22+ with npm, an OpenAI API key with API quota and access to the configured model, and outbound HTTPS access to OpenAI.
+Трек: **Educational Technologies** · Кейс: **«AI Lecture Notes: Study Materials from a Lecture»** · Команда: **TΞSTING**.
+
+[Проверка для жюри](#проверка-для-жюри) · [Установка и запуск](#установка-и-запуск)
+
+Ссылка на публичный деплой в репозитории не указана.
+
+## Что получает студент
+
+- **Обзор перед повторением.** «Lecture summary» — связный краткий конспект; «Key points» — отдельный список основных тезисов. При успешной генерации набор содержит от одной до шести тем. При необходимости модель может добавить «Source notes» о неоднозначности исходного текста или ограниченном охвате.
+- **Самопроверку с разбором.** Для каждой темы есть вопрос с четырьмя вариантами. После ответа на все вопросы «Check answers» показывает результат, правильный ответ и объяснение к каждому вопросу.
+- **Повторение по результатам теста.** Каждой теме соответствует карточка с вопросом или термином на лицевой стороне и ответом или объяснением на обороте. «Review missed topics» оставляет карточки по темам с ошибками. Можно раскрывать ответы и переключаться на весь набор.
+
+«Lecture excerpt» раскрывает исходную цитату рядом с тезисом, разбором ответа или оборотом карточки. Сервер проверяет наличие этой цитаты в лекции; смысловую связь между цитатой и выводом оценивает читатель. У конспекта отдельной цитаты нет.
+
+## Как это работает
+
+**Текст лекции → «Generate study materials» → «Overview» → «Quiz» → «Flashcards».**
+
+Вставьте текст в «Lecture transcript». Приложение принимает **300–20 000 символов после удаления пробельных символов по краям**. Во время запроса виден статус «Generating study materials…», поле и кнопки ввода недоступны. Успешный результат открывается в «Overview»; между тремя разделами можно переключаться в любом порядке. Карточки доступны и до прохождения теста.
+
+После «Check answers» выбранные ответы блокируются. «Retry quiz» сбрасывает ответы, результат и фильтр карточек, сохраняя сгенерированный набор. Переход к пропущенным темам использует ошибки последней проверенной попытки; до проверки теста такой список пуст. Это фильтрация по темам, без отдельного алгоритма адаптивного обучения.
+
+Любое редактирование лекции сразу убирает старые материалы. Повторное «Generate study materials» отправляет новый запрос и сбрасывает тест и карточки, даже если текст не изменился. При ошибке текст сохраняется, кнопки снова доступны: повторить запрос можно вручную. «Clear» очищает ввод и результаты.
+
+## Проверка для жюри
+
+**Доступ:** запустите проект по [инструкции ниже](#установка-и-запуск). Для генерации нужен серверный OpenAI API key с доступом к выбранной модели, доступной API-квотой и исходящим HTTPS-соединением. Регистрации в LectureKit нет. Без ключа интерфейс откроется, но материалы не появятся. Запросы используют квоту вашего API-проекта.
+
+Используйте [synthetic-lecture.txt](test/fixtures/synthetic-lecture.txt): это **синтетический тестовый текст** о вымышленном классном эксперименте, а не настоящая лекция или проверенный образовательный датасет. Его 1 417 символов после обрезки пробелов укладываются в лимит. Текст нужно скопировать в поле самостоятельно; готовые ответы из файла не подставляются.
+
+1. Откройте [локальное приложение](http://localhost:3000) после запуска. Если изменили `PORT`, используйте свой порт. Нажмите «Clear» и вставьте весь пример в «Lecture transcript»: счётчик покажет `1,417`.
+2. Нажмите «Generate study materials». После успешного ответа появятся заголовок набора и статус «Study materials ready.». В «Overview» проверьте два отдельных результата: «Lecture summary» и список «Key points». Число и формулировки тем могут меняться между запусками.
+3. Раскройте «Lecture excerpt» у одного тезиса. Найдите фрагмент в исходной лекции и сопоставьте смысл, числа и условия. Само совпадение текста цитаты ещё не подтверждает правильность тезиса.
+4. Нажмите «Take the quiz», выберите вариант в каждом вопросе и нажмите «Check answers». Появятся число верных ответов, отметки «Correct»/«Incorrect», «Correct answer:», объяснения и выдержки. Если всё верно, запомните один правильный вариант, нажмите «Retry quiz» и намеренно выберите другой в этом вопросе; ответьте на остальные и снова проверьте тест.
+5. Нажмите «Review missed topics». В «Flashcards» будет выбран фильтр «Missed topics»: по одной карточке на тему с ошибкой. «Reveal answer» открывает ответ и цитату, «Hide answer» скрывает их. «Previous»/«Next» переключают карточки, если их несколько. Выберите «All topics», чтобы увидеть весь набор. При полностью верном тесте кнопка называется «Review all flashcards».
+6. Снова нажмите «Generate study materials»: старый набор исчезнет на время запроса, а успешный ответ откроет новый обзор с чистым состоянием теста. Можно сначала изменить лекцию в пределах лимита: старые результаты исчезнут уже при редактировании. Повторный запрос не обязан давать другие формулировки.
+7. Нажмите «Clear», затем «Generate study materials» с пустым полем. Ожидается «Enter at least 300 characters of lecture text.», без генерации.
+
+Это сценарий проверки живой генерации при настроенном API. Генерация, тест, карточки по ошибкам и повторная генерация проверены на синтетическом примере; точный охват — в разделе [«Проверки»](#проверки).
+
+## Соответствие кейсу
+
+| Требование | Реализация | Как проверить |
+| --- | --- | --- |
+| Ввод текста лекции | Поле «Lecture transcript», 300–20 000 символов | Вставить пример, проверить счётчик |
+| Краткий конспект | `summary`, короче исходного текста | «Overview» → «Lecture summary» |
+| Отдельные ключевые тезисы | По одному `keyPoint` на тему | Список «Key points» |
+| Тест с ответами | Вопрос на тему, 4 варианта, правильный вариант и объяснение | Ответить на всё → «Check answers» |
+| Карточки с ответами | По одной паре `front`/`back` на тему | «Flashcards» → «Reveal answer» |
+| Отображение в интерфейсе | Разделы обзора, теста и карточек | Переключить «Overview» / «Quiz» / «Flashcards» |
+| Повторная обработка | Новый API-запрос, сброс учебного состояния | Снова «Generate study materials» |
+| Пустой и короткий ввод | Проверки в браузере и на сервере | Отправить пустой текст или менее 300 символов |
+| Опора на содержание лекции | Инструкции модели и поиск цитаты в тексте; смысл не проверяется автоматически | Сопоставить «Lecture excerpt» с тезисом и исходником |
+
+Все четыре вида материалов получены через реальный API и показаны в браузере. Это подтверждает рабочий путь приложения на тестовом примере, но не гарантирует качество произвольных будущих материалов.
+
+## Технологии
+
+| Технология | Роль |
+| --- | --- |
+| JavaScript, ES modules | Серверная и клиентская логика |
+| HTML, CSS, браузерный DOM и Fetch API | Интерфейс без frontend-фреймворка и сборки |
+| Node.js 22+ | Среда выполнения; требование задано в `package.json` |
+| Express 5 | HTTP API и раздача `public/` |
+| Официальный SDK `openai` 6, OpenAI Responses API | Серверная генерация со строгой JSON Schema |
+| dotenv 17 | Загрузка конфигурации из `.env` |
+| Встроенный `node:test` | Офлайн-тесты валидаторов и HTTP API |
+
+В исполняемом коде модель по умолчанию — **`gpt-4.1-mini`**. `OPENAI_MODEL` позволяет выбрать другую доступную вашему API-проекту модель, совместимую с Responses API и используемой строгой JSON Schema. Фактическая конфигурация публичного сервиса не установлена. Версии зависимостей зафиксированы в [package-lock.json](package-lock.json); готовой конфигурации хостинга в репозитории нет.
+
+## Архитектура и генерация материалов
+
+Express обслуживает страницу и API с одного адреса. Браузер отправляет `POST /api/generate` с JSON `{ "transcript": "…" }`. Сервер проверяет ввод, делает один запрос к OpenAI, разбирает и проверяет ответ, затем возвращает `{ "pack": … }` либо `{ "error": "…" }`. В браузере индекс темы связывает тезис, вопрос и карточку; список ошибочных индексов определяет набор для повторения.
+
+```text
+Браузер: текст лекции
+  → Express /api/generate: проверка ввода
+  → OpenAI Responses API: инструкции + лекция + JSON Schema
+  → parseResponse / validatePack: проверка результата и цитат
+  → Браузер: обзор → тест → карточки по ошибкам
+```
+
+Механизм можно проверить в [server.mjs](server.mjs), [lib/study.mjs](lib/study.mjs) и [public/app.js](public/app.js):
+
+- **Инструкции модели:** использовать только лекцию, сохранять важные числа, условия и исключения, отмечать противоречия, игнорировать команды внутри исходного текста. Требуется краткая непрерывная цитата, поддерживающая материалы каждой темы. Внешние источники к запросу не добавляются.
+- **Структура:** заголовок, конспект, массив примечаний и 1–6 тем. Каждая тема содержит тезис, цитату, вопрос с четырьмя вариантами и объяснением, карточку с ответом. Сервер проверяет состав полей, непустые значения, длину конспекта, число тем, различие вариантов и диапазон индекса правильного ответа.
+- **Проверка источника:** цитата должна встречаться в лекции после нормализации пробельных символов. Это проверка присутствия фрагмента, а не фактов, полноты охвата или того, что вывод следует из цитаты. Для конспекта нет отдельной автоматической проверки содержания.
+- **Ошибки:** отказ модели, незавершённый ответ, нечитаемый JSON или нарушение проверок дают ошибку вместо частичного набора. Лимит ответа — 5 000 токенов; тайм-аут SDK — 60 секунд, браузера — 70 секунд. Автоматических повторов запроса нет.
+
+```text
+.
+├── server.mjs                         # Express, API, OpenAI, запуск
+├── lib/study.mjs                      # Инструкции, схема, валидаторы
+├── public/
+│   ├── index.html                    # Страница LectureKit
+│   ├── app.js                        # Генерация, тест, карточки
+│   └── styles.css                    # Оформление
+├── test/
+│   ├── study.test.mjs                 # Офлайн-тесты
+│   └── fixtures/synthetic-lecture.txt # Синтетический пример
+├── .env.example                      # Безопасный шаблон настроек
+├── package.json                      # Зависимости и команды
+└── package-lock.json                 # Зафиксированные версии
+```
+
+## Установка и запуск
+
+Нужны **Node.js 22+ с npm** и OpenAI API key для генерации. Приложение находится **в корне репозитория** (`/Users/user/Developer/bil` в текущей локальной среде), рядом с `package.json` и `server.mjs`. Отдельного вложенного приложения нет.
 
 ```sh
-npm install
-cp .env.example .env
-# Set OPENAI_API_KEY in .env using your editor. Never put it in frontend code.
+npm ci
+# Создать .env из шаблона, только если файла ещё нет:
+test -e .env || cp .env.example .env
+```
+
+Откройте корневой `.env` в редакторе и задайте `OPENAI_API_KEY` своим ключом. Остальные настройки можно оставить из шаблона. Не публикуйте реальные ключи в Git и не помещайте их в клиентский код: в этой реализации SDK и ключ используются на сервере, а браузеру раздаётся только каталог `public/`. `.env` включён в `.gitignore`.
+
+| Переменная | Назначение | Обязательность / значение по умолчанию |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | Доступ сервера к OpenAI API | Обязательна для генерации; без неё страница и `/health` работают |
+| `OPENAI_MODEL` | Идентификатор модели | Необязательна; `gpt-4.1-mini` |
+| `PORT` | Порт HTTP-сервера | Необязательна; `3000`, допустимы целые 1–65535 |
+
+`dotenv` загружает `.env` из текущего рабочего каталога процесса, поэтому запускайте команды из корня. Уже заданные переменные окружения имеют приоритет. После изменения настроек перезапустите процесс.
+
+```sh
 npm start
 ```
 
-Open [LectureKit locally](http://localhost:3000). This is a local address, not a public deployment.
+Откройте [http://localhost:3000](http://localhost:3000). Не открывайте `public/index.html` как локальный файл: генерации нужен работающий сервер и его `/api/generate`. Сервер слушает `0.0.0.0` и использует `PORT`; если порт занят или недопустим, запуск завершается с ошибкой. Отдельной команды разработки, frontend-сборки или деплоя нет. Локальный адрес не является публичным деплоем.
 
-```dotenv
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-4.1-mini
-PORT=3000
-```
-
-`.env` is loaded on the server and ignored by Git. Environment variables can also be supplied by the host. Change `OPENAI_MODEL` to a model your API project can access that supports Responses structured outputs. Restart after changing configuration. The server starts without a key; generation then returns a clear configuration error.
+Проверка доступности процесса:
 
 ```sh
-npm run check
-npm test
+curl http://localhost:3000/health
+# Ожидается: {"status":"ok"}
 ```
 
-No frontend build step is needed. In this implementation environment, Node 24.19.0 was supplied by the desktop runtime, and npm commands were executed through its cached `pnpm dlx npm` runner because npm was not on PATH. A normal Node/npm installation uses the commands above.
+`/health` не проверяет ключ или модель. Для размещения приложения нужен постоянно работающий Node-процесс с этими же настройками, исходящий HTTPS-доступ к OpenAI и HTTP-тайм-аут хостинга, позволяющий дождаться генерации.
 
-## Use
+## Данные и внешние интеграции
 
-1. Paste 300–20,000 trimmed characters of lecture text and choose **Generate study materials**. These are prototype limits; counts use JavaScript UTF-16 string length. Oversized input is rejected, never truncated.
-2. Read **Lecture summary** and **Key points** in Overview. Expand **Lecture excerpt** to inspect support. Source ambiguity or limited coverage may appear in notes.
-3. Choose **Take the quiz**, answer every question, then **Check answers**. See the score, correct answers, explanations, and excerpts. Answers stay locked until **Retry quiz**.
-4. Choose **Review missed topics**. Reveal a card's answer, then use Previous/Next. Switch between All topics and Missed topics. If nothing was missed, review all cards; before checking the quiz, the missed deck explains that no results exist yet.
-5. Edit the transcript or generate again. Editing immediately hides old material; each generation clears answers, score, filter, and revealed cards. Failure preserves the text and lets you explicitly retry. Clear removes the current session's input and results.
+Входные данные — вставленная пользователем расшифровка. **Текст лекции передаётся в OpenAI API.** Поиска в интернете, подключения образовательной базы или других источников данных при генерации нет.
 
-The repository includes `test/fixtures/synthetic-lecture.txt`, authored for this implementation: an explicitly fictional seed experiment with several topics, quantities, and exceptions. It is software test material, not an authentic lecture or gardening advice. It is not preloaded into the UI and never serves as fallback output. No authentic selected lecture was supplied or validated. The pre-existing design-prompt document is preserved unchanged; no competition reuse permission is asserted.
+Включённый [пример](test/fixtures/synthetic-lecture.txt) создан при реализации LectureKit для тестирования ПО и прямо помечен как вымышленный материал, а не рекомендация по выращиванию растений. Настоящая выбранная лекция в репозитории не найдена: кейс и проектный промпт не использовались вместо лекции. Права на переиспользование сторонних лекций и разрешения конкурса не предполагаются.
 
-## Architecture
+Приложение не записывает лекции и результаты в файлы или базу данных и не ведёт журнал их содержимого. Набор, ответы теста и фильтр карточек находятся в памяти страницы; восстановления сеанса после перезагрузки нет. Сервер отправляет `store: false`, ответы API помечаются `Cache-Control: no-store`. Эти настройки не устанавливают сроки хранения данных у OpenAI или в инфраструктуре хостинга.
 
-Express serves only `public/` and the same-origin API. `POST /api/generate` accepts `{ "transcript": "..." }`, returns `{ "pack": StudyPack }` or `{ "error": "..." }`, and makes one server-side OpenAI Responses request per valid click, with separate high-priority instructions, strict JSON Schema, `store: false`, a 5,000-token output budget, a 60-second SDK timeout, and zero automatic retries. The browser times out after 70 seconds. `lib/study.mjs` owns the schema, instructions, and ordinary-code validation. Each of one to six topic bundles contains a key point, source quote, quiz, and flashcard; topic indices connect missed questions to cards. Quiz and revision state live only in page memory. Validation rejects incomplete packs, malformed choices, incorrect index ranges, and quotes absent from the transcript after whitespace normalization. No topic is silently discarded and no generated-content cache is used. See the [OpenAI structured outputs documentation](https://developers.openai.com/api/docs/guides/structured-outputs).
+## Проверки
 
-## Features and limits
+Доступные команды:
 
-Implemented: all four outputs, predominant-lecture-language generation with an English interface, excerpt disclosures, source notes, complete quiz feedback, missed-topic revision, fresh reruns, accessible status/errors, safe text rendering, and responsive plain CSS.
+```sh
+npm run check  # node --check для server.mjs, lib/study.mjs, public/app.js
+npm test       # node --test
+```
 
-Intentionally omitted: accounts, database, persistence/localStorage, uploads, audio/video, chat, export, embeddings, agent frameworks, streaming, analytics, and deployment automation.
+[Существующие тесты](test/study.test.mjs) проверяют границы ввода, состав набора, варианты и индексы ответов, совпадение цитат, отказ и некорректный ответ модели, HTTP-ошибки, раздачу статики и недоступность приватных файлов через сервер. Также проверяются параметры запроса и передача изменённой лекции при повторной генерации. Клиенты OpenAI в тестах подменены или отключены; внешних AI-запросов нет.
 
-Model quality varies. Instructions require lecture-only content and preserved conditions, exceptions, and unresolved contradictions, but the model can still make unsupported claims or ambiguous questions. A matching excerpt proves only that the text exists; it does not establish that every generated claim follows from it. The source itself may contain errors. There is no claim of fact-checking or proven learning benefits. Short or ambiguous lectures may support fewer topics; unsupported or unusable output is rejected. API availability, quota, model access, latency, and hosting uptime remain external dependencies. The unauthenticated prototype provides no per-user quota controls.
+Проверено 15 сентября 2026 года при стабилизации приложения:
 
-**Privacy:** Lecture text is sent to the OpenAI API. This app does not persist or log transcripts, has no cross-user generated state, and stores browser results only in memory until clear/reload. `store: false` is sent to the API; this does not promise provider-side zero retention. Keep credentials server-side. API responses use `Cache-Control: no-store`.
+| Область | Результат |
+| --- | --- |
+| Синтаксис | Все три проверки `node --check` прошли |
+| Офлайн-тесты | `node --test`: 9 из 9 прошли, без пропусков |
+| Локальный запуск | Реальный корневой `.env` загружен; `npm start` и `/health` работают. Проверка выполнялась на свободном порту 3001. HTTP-тесты проверили страницу, JS/CSS, недоступность приватных файлов и ошибки ввода |
+| Браузер | Пустой/короткий ввод, блокировка кнопок во время генерации, обязательность всех ответов, оценка 5/6 с одной намеренной ошибкой, правильные ответы, блокировка проверенных ответов, карточка ошибочной темы, раскрытие ответа и цитаты, фильтр и навигация прошли проверку |
+| Живая AI-генерация | Три успешных запроса через приложение с существующим серверным ключом и `gpt-4.1-mini`: один HTTP-запрос и два из браузера. В каждом получены все четыре типа материалов; первый запрос занял около 17 секунд |
+| Повторная генерация | В браузере количество воды изменено с 20 на 35 мл. Новый тезис и цитата содержат 35 мл. После редактирования старый результат скрыт; после генерации ответы и балл сброшены, фильтр — All topics, карточка закрыта; Missed topics объясняет отсутствие проверенного теста |
+| Проверка содержания | Проверены тезисы, ответы и карточки о поливе, подсчёте ростков и разливе. Цитаты всех шести тем в обоих браузерных наборах найдены в соответствующем тексте после нормализации пробелов |
+| Публичная версия | Адрес не установлен; проверка деплоя не проводилась |
 
-## Verification performed
+Проверки выполнялись на Node.js **24.19.0**. В этой среде npm отсутствует в `PATH`, поэтому `npm start`, `npm run check` и `npm test` выполнены через имеющийся `pnpm dlx npm` и поставляемый с окружением Node.js. Зависимости из существующего lockfile уже установлены; повторная установка и обновление зависимостей не выполнялись. Сеть и локальные сокеты потребовали разрешения среды. Моки остались только в автоматических тестах.
 
-- Dependency installation completed; npm reported zero vulnerabilities at installation time.
-- `npm run check` passed for server, validation module, and browser JavaScript.
-- `npm test` passed all 9 node:test cases: input boundaries/types; valid and incomplete packs; invalid answer indices/options; fabricated and whitespace-varied quotes; malformed/refused/incomplete output; HTTP health/assets/private-file isolation; body size and Unicode-escaped input; missing configuration; safe provider errors/timeouts; and one request per generation with changed input forwarded. Provider mocks exist only inside automated tests and do not test actual model quality.
-- `npm start` started the server without credentials. HTTP smoke checks confirmed `/health`, `/`, `/app.js`, `/styles.css`, and clear invalid-input rejection.
-- Browser checked empty-input rejection, the live endpoint's missing-key error with the synthetic lecture preserved, restored controls, explicit retry, and Clear. No generated results were substituted.
-- **Blocked:** no `OPENAI_API_KEY` was available. Real generation, provider acceptance of the schema, all four live outputs, semantic inspection against the source, the changed-lecture live request, and the successful Generate → Quiz → missed-topic cards → Generate again browser journey remain unverified. No public deployment was performed. No authentic selected-lecture check was performed.
+Проверка выявила ограничения качества: модель иногда расширяла «пропустить полив этим утром» до «в этот день», а пояснение об общей полке — до контроля всех переменных; правильный вариант также часто оказывался первым. Инструкции уточнены, но это не гарантирует устранения таких ошибок. Проверена работа приложения на синтетическом тексте, а не достоверность любого будущего материала. Настоящие лекции, многоязычная генерация и публичный хостинг остаются непроверенными.
 
-The sandbox initially blocked package networking and local listeners; installation and socket-based checks succeeded with the environment's approved network/socket access.
+## Ограничения текущей версии
 
-## Node-service hosting settings
-
-No existing deployment configuration was present. For a generic Node service, install locked dependencies with `npm ci`, run `npm start`, and configure `OPENAI_API_KEY`, optional `OPENAI_MODEL`, and the host's `PORT`. The server listens on `0.0.0.0`; use `GET /health` (returns `{ "status": "ok" }`) as the health check. Allow outgoing HTTPS to OpenAI and request durations exceeding 60 seconds. Serve the frontend and API together. Health indicates process availability, not working OpenAI credentials. No cloud resources were provisioned.
-
-External runtime dependencies: Express (HTTP/static serving), the official `openai` SDK (Responses API), and dotenv (server configuration); transitive versions are recorded in `package-lock.json`. Tests use built-in `node:test`. No external browser assets or new browser-test framework are required.
+- **Только текст через поле ввода.** Загрузки файлов, распознавания аудио/видео, чата и экспорта нет. Лимит 300–20 000 проверяется в браузере и на сервере через JavaScript `String.length` — в единицах UTF-16, поэтому некоторые символы считаются за два. Большой текст отклоняется без обрезки; тело JSON ограничено 160 КиБ.
+- **Не более шести тем.** Набор не гарантирует охват всей длинной лекции. Неполный или противоречивый исходник может привести к ограниченному набору, примечанию либо отказу; наличие примечания не гарантирует выявления всех проблем.
+- **Материалы требуют сверки.** Модель может ошибиться в тезисе, правильном ответе или объяснении. Совпавшая цитата не устраняет эту возможность, а сама лекция тоже может содержать ошибки. Качество на настоящих лекциях в этой задаче не проверялось.
+- **Англоязычный интерфейс.** Инструкция просит модель писать материалы на преобладающем языке лекции; надёжность русскоязычной и многоязычной генерации здесь не проверена.
+- **Зависимость от API.** Генерации нужны сеть, доступ к модели и API-квота; возможны тайм-ауты и ошибки. Каждый повтор — новый запрос. В прототипе нет авторизации и пользовательских ограничений частоты запросов.
+- **Один сеанс страницы.** Истории и сохранённых наборов нет. Редактирование, новая генерация и «Clear» сбрасывают результаты, перезагрузка теряет учебное состояние. Балл теста отражает ответы на текущий набор вопросов; это не оценка освоения предмета.

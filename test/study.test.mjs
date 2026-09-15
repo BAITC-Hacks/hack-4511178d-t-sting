@@ -49,6 +49,7 @@ test('rejects malformed packs, empty or excess topics, duplicate options, and lo
 });
 test('handles refusals, incomplete, empty, and unparseable responses', () => {
   for (const response of [
+    null, undefined, [], { status: 'completed', output: 'invalid' },
     { status: 'completed', output: [{ content: [{ type: 'refusal' }] }] },
     { status: 'incomplete' }, { status: 'failed' },
     { status: 'completed', output_text: '' }, { status: 'completed', output_text: '{' },
