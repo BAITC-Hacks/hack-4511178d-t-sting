@@ -1,0 +1,17 @@
+{
+  "name": "lecturekit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "check": "node --check server.mjs && node --check lib/study.mjs && node --check public/app.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "openai": "^6.0.0"
+  }
+}

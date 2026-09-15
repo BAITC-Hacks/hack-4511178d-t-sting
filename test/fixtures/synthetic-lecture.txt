@@ -1,0 +1,15 @@
+SYNTHETIC TEST LECTURE — The classroom seed experiment
+
+Today we describe the rules of our fictional classroom seed experiment. These rules are invented for software testing, not gardening advice.
+
+Each tray contains ten seeds. We label the tray with its group name before adding seeds so that observations can be attributed to the correct group.
+
+The standard watering amount is 20 milliliters per tray each morning. If the soil is still visibly wet, skip watering that morning. This exception takes precedence over the standard amount; do not add water merely to meet a daily total.
+
+Keep both groups on the same shelf. The only planned difference between groups is the color of the tray cover. Moving one group to a different shelf would introduce another difference and make the comparison harder to interpret.
+
+Record the number of newly sprouted seeds at noon each day. Do not count a seed again on later days. A cumulative total is the sum of the daily counts and cannot exceed ten for one tray.
+
+Run the experiment for seven days. If a tray spills, mark its observations after the spill as disrupted and exclude those later observations from the comparison. Keep observations from before the spill.
+
+At the end, compare cumulative counts for trays without disrupted observations. A higher count describes this classroom trial only; it does not establish that a cover color works better for every seed variety.
