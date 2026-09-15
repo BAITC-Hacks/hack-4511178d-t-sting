@@ -9,29 +9,36 @@
 </head>
 <body>
   <main>
-    <header><p class="eyebrow">LECTUREKIT</p><h1>From lecture to revision.</h1><p class="intro">Summarize the ideas. Test your understanding. Revisit what you missed.</p></header>
+    <header>
+      <p class="eyebrow brand">LectureKit</p>
+      <h1>Your lecture. Ready to study.</h1>
+      <p class="intro">Turn a lecture transcript into notes, questions, and revision cards.</p>
+    </header>
     <section class="panel" aria-labelledby="input-heading">
       <h2 id="input-heading">Start with your lecture</h2>
       <form id="generate-form" novalidate>
         <label for="transcript">Lecture transcript</label>
-        <textarea id="transcript" rows="9" placeholder="Paste your lecture text here…" aria-describedby="limits privacy" spellcheck="false"></textarea>
-        <p id="limits" class="muted"><span id="count">0</span> characters · 300–20,000 after trimming</p>
-        <div class="actions"><button id="generate" type="submit">Generate study materials</button><button id="clear" type="button" class="secondary">Clear</button></div>
-        <p id="privacy" class="muted">Your lecture is sent to the configured AI provider. This app does not save it. Reloading clears your session.</p>
+        <p id="input-help" class="muted">Paste one lecture to get a summary, key points, a quiz, and flashcards.</p>
+        <textarea id="transcript" rows="9" placeholder="Paste your lecture text here…" aria-describedby="input-help limits error privacy" spellcheck="false"></textarea>
+        <p id="limits" class="muted"><span><span id="count">0</span> characters</span><span>Use 300–20,000 characters, excluding spaces at the start and end.</span></p>
+        <p id="error" class="error" role="alert"></p>
+        <div class="actions"><button id="generate" type="submit">Generate study materials</button><button id="clear" type="button" class="secondary">Clear transcript</button></div>
+        <p id="privacy" class="muted">Your lecture is sent to the AI provider for processing. LectureKit does not save it. Reloading clears your session.</p>
       </form>
       <p id="status" role="status" aria-live="polite"></p>
-      <p id="error" class="error" role="alert"></p>
     </section>
     <section id="results" hidden aria-labelledby="pack-title">
+      <p class="eyebrow">Your study materials</p>
       <h2 id="pack-title" tabindex="-1"></h2>
       <nav class="views" aria-label="Study views">
-        <button type="button" data-view="overview" aria-pressed="true">Overview</button>
-        <button type="button" data-view="quiz" aria-pressed="false">Quiz</button>
-        <button type="button" data-view="flashcards" aria-pressed="false">Flashcards</button>
+        <button type="button" data-view="overview" aria-controls="overview" aria-pressed="true">Overview</button>
+        <button type="button" data-view="quiz" aria-controls="quiz" aria-pressed="false">Quiz</button>
+        <button type="button" data-view="flashcards" aria-controls="flashcards" aria-pressed="false">Flashcards</button>
       </nav>
       <section id="overview" class="panel" aria-label="Overview"></section>
       <section id="quiz" class="panel" aria-label="Quiz" hidden></section>
       <section id="flashcards" class="panel" aria-label="Flashcards" hidden></section>
+      <p class="muted rerun-hint">Ready for another lecture? Clear or replace the transcript above. Editing it removes these study materials.</p>
     </section>
     <footer>Made from your lecture. AI can make mistakes; use the excerpts to check the material.</footer>
   </main>

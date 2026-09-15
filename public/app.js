@@ -66,7 +66,9 @@ $('#generate-form').addEventListener('submit', async (event) => {
     transcript.setAttribute('aria-invalid', 'true'); transcript.focus(); return;
   }
   pending = true;
+  const generateLabel = $('#generate').textContent;
   for (const node of [transcript, $('#generate'), $('#clear')]) node.disabled = true;
+  $('#generate').textContent = 'Generating study materials…';
   $('#generate-form').setAttribute('aria-busy', 'true');
   $('#status').textContent = 'Generating study materials…';
   const controller = new AbortController();
@@ -95,6 +97,7 @@ $('#generate-form').addEventListener('submit', async (event) => {
   } finally {
     clearTimeout(timeout); pending = false;
     for (const node of [transcript, $('#generate'), $('#clear')]) node.disabled = false;
+    $('#generate').textContent = generateLabel;
     $('#generate-form').setAttribute('aria-busy', 'false');
   }
 });
@@ -128,7 +131,15 @@ function renderQuiz() {
       radio.value = String(optionIndex); radio.required = true;
       radio.checked = answers[index] === optionIndex; radio.disabled = checked;
       radio.addEventListener('change', () => { answers[index] = optionIndex; });
-      label.append(radio, element('span', option)); field.append(label);
+      const optionText = element('span', option, 'option-text');
+      if (checked && optionIndex === topic.quiz.correctIndex) {
+        label.classList.add('is-correct');
+        optionText.append(element('span', radio.checked ? 'Your answer · Correct' : 'Correct answer', 'option-status'));
+      } else if (checked && radio.checked) {
+        label.classList.add('is-incorrect');
+        optionText.append(element('span', 'Your answer · Incorrect', 'option-status'));
+      }
+      label.append(radio, optionText); field.append(label);
     });
     if (checked) {
       const correct = answers[index] === topic.quiz.correctIndex;
@@ -169,28 +180,32 @@ function renderQuiz() {
 
 function renderCards() {
   const view = $('#flashcards'); view.replaceChildren(element('h3', 'Flashcards'));
-  const label = element('label', 'Review '); label.htmlFor = 'card-filter';
+  const toolbar = element('div', undefined, 'card-toolbar');
+  const label = element('label', 'Review topics'); label.htmlFor = 'card-filter';
   const select = element('select'); select.id = 'card-filter';
   for (const [value, text] of [['all', 'All topics'], ['missed', 'Missed topics']]) {
     const option = element('option', text); option.value = value; select.append(option);
   }
   select.value = filter;
   select.addEventListener('change', () => { filter = select.value; cardPosition = 0; revealed = false; renderCards(); $('#card-filter').focus(); });
-  view.append(label, select);
+  toolbar.append(label, select); view.append(toolbar);
   const indices = filter === 'missed' ? missed : pack.topics.map((_topic, index) => index);
   if (!indices.length) {
-    view.append(element('p', checked ? 'Nothing missed. Choose All topics to review the whole deck.' : 'Take and check the quiz first to find topics to review.'));
+    view.append(element('p', checked ? 'No missed topics. Choose All topics to review the whole deck.' : 'No missed topics yet. Take and check the quiz first to find topics to review.', 'card-empty'));
     return;
   }
   const topic = pack.topics[indices[cardPosition]];
   const card = element('article', undefined, 'flashcard'); card.setAttribute('aria-live', 'polite');
-  card.append(element('p', `Card ${cardPosition + 1} of ${indices.length}`, 'muted'), element('h4', topic.flashcard.front));
+  card.append(element('p', `Card ${cardPosition + 1} of ${indices.length}`, 'card-position'),
+    element('p', 'Question or term', 'card-label'), element('h4', topic.flashcard.front));
+  const answer = element('div'); answer.id = 'card-answer'; answer.hidden = !revealed;
   if (revealed) {
-    card.append(element('p', topic.flashcard.back, 'answer'), excerpt(topic.quote));
+    answer.append(element('p', 'Answer', 'card-label'), element('p', topic.flashcard.back, 'answer'), excerpt(topic.quote));
   }
+  card.append(answer);
   const reveal = button(revealed ? 'Hide answer' : 'Reveal answer', () => { revealed = !revealed; renderCards(); $('#reveal').focus(); });
-  reveal.id = 'reveal'; reveal.setAttribute('aria-expanded', String(revealed)); card.append(reveal); view.append(card);
-  const actions = element('div', undefined, 'actions');
+  reveal.id = 'reveal'; reveal.setAttribute('aria-expanded', String(revealed)); reveal.setAttribute('aria-controls', 'card-answer'); card.append(reveal); view.append(card);
+  const actions = element('div', undefined, 'actions card-navigation');
   const move = (step) => { cardPosition += step; revealed = false; renderCards(); $('#reveal').focus(); };
   const previous = button('Previous', () => move(-1), true); previous.disabled = cardPosition === 0;
   const next = button('Next', () => move(1), true); next.disabled = cardPosition === indices.length - 1;
