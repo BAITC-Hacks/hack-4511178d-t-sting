@@ -23,6 +23,15 @@ test('rejects missing, non-string, empty, short, and oversized input', () => {
   assert.equal(validateTranscript('x'.repeat(20000)).length, 20000);
 });
 test('accepts a complete valid pack', () => assert.deepEqual(validatePack(validPack(), transcript), validPack()));
+test('accepts every correct answer position with the supported answer preserved', () => {
+  for (let index = 0; index < 4; index += 1) {
+    const pack = validPack();
+    const [correctOption] = pack.topics[0].quiz.options.splice(0, 1);
+    pack.topics[0].quiz.options.splice(index, 0, correctOption);
+    pack.topics[0].quiz.correctIndex = index;
+    assert.deepEqual(validatePack(pack, transcript), pack);
+  }
+});
 test('rejects invalid answer indices and incomplete topics', () => {
   for (const index of [-1, 4, 0.5, '0']) {
     const pack = validPack(); pack.topics[0].quiz.correctIndex = index;
@@ -95,6 +104,44 @@ test('one provider call per request, strict schema, no storage, and changed lect
   assert.equal(calls[1].input[0].content, changed.trim());
   assert.equal(calls[0].store, false); assert.equal(calls[0].text.format.strict, true);
   assert.equal(calls[0].max_output_tokens, 5000);
+});
+test('HTTP rejects missing and null required output fields without partial materials or raw output', async (t) => {
+  let generated;
+  const base = await serve(t, { client: { responses: { create: async () => ({
+    status: 'completed', output_text: JSON.stringify(generated),
+  }) } } });
+  const paths = [
+    ['title'], ['summary'], ['notes'], ['topics', 0, 'quiz'],
+    ['topics', 0, 'quiz', 'explanation'], ['topics', 0, 'flashcard'],
+    ['topics', 0, 'flashcard', 'front'], ['topics', 0, 'flashcard', 'back'],
+  ];
+  for (const path of paths) {
+    for (const missing of [true, false]) {
+      generated = validPack();
+      const owner = path.slice(0, -1).reduce((value, key) => value[key], generated);
+      if (missing) delete owner[path.at(-1)];
+      else owner[path.at(-1)] = null;
+      const context = `${path.join('.')} ${missing ? 'missing' : 'null'}`;
+      const response = await post(base, transcript);
+      assert.equal(response.status, 502, context);
+      assert.deepEqual(await response.json(), {
+        error: 'Generated materials failed validation. Please generate again.',
+      }, context);
+    }
+  }
+});
+test('HTTP preserves multiline Unicode and surrogate pairs except outer whitespace', async (t) => {
+  const calls = [];
+  const base = await serve(t, { client: { responses: { create: async (request) => {
+    calls.push(request); return { status: 'completed', output_text: JSON.stringify(validPack()) };
+  } } } });
+  const unicodeTranscript = ` \t\nЛекция: café, e\u0301, 🌱🧪.\r\n植物の授業\t第二行。\n\n${transcript}\n \t`;
+  assert.ok(unicodeTranscript.trim().length >= 300 && unicodeTranscript.trim().length <= 20000);
+  const response = await post(base, unicodeTranscript);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { pack: validPack() });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].input[0].content, unicodeTranscript.trim());
 });
 test('provider errors are safe and invalid model output is never a success', async (t) => {
   let failure;
